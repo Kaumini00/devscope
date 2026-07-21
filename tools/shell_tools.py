@@ -71,16 +71,36 @@ def run_command(
 
     # ── Build environment ─────────────────────────────────────────────────────
 
+    # Build environment with git in PATH
     env = os.environ.copy()
+    
+    # Ensure git is findable
+    git_paths = [
+        "C:\\Program Files\\Git\\cmd",
+        "C:\\Program Files\\Git\\mingw64\\bin",
+    ]
+    current_path = env.get("PATH", "")
+    extra = ";".join(p for p in git_paths if p not in current_path)
+    if extra:
+        env["PATH"] = extra + ";" + current_path
+
     if environment:
         env.update(environment)
 
     # ── Execute ───────────────────────────────────────────────────────────────
 
     try:
+        # shell=False is more reliable in restricted environments like Claude Desktop
+        # shlex.split handles quoted arguments correctly
+        try:
+            args = shlex.split(command)
+        except ValueError:
+            # fallback for commands shlex can't parse
+            args = command.split()
+
         result = subprocess.run(
-            command,
-            shell=True,
+            args,
+            shell=False,                # ← key change
             cwd=str(resolved_dir),
             capture_output=True,
             text=True,
@@ -98,19 +118,30 @@ def run_command(
             "success":           result.returncode == 0,
             "stdout":            stdout,
             "stderr":            stderr,
-            "output":            stdout or stderr,   # convenience field
+            "output":            stdout or stderr,
             "timed_out":         False,
+        }
+
+    except FileNotFoundError:
+        return {
+            "command":   command,
+            "exit_code": -1,
+            "success":   False,
+            "stdout":    "",
+            "stderr":    f"Command not found: '{command.split()[0]}'",
+            "output":    f"Command not found: '{command.split()[0]}'",
+            "timed_out": False,
         }
 
     except subprocess.TimeoutExpired:
         return {
-            "command":     command,
-            "exit_code":   -1,
-            "success":     False,
-            "stdout":      "",
-            "stderr":      f"Command timed out after {timeout} seconds",
-            "output":      f"Command timed out after {timeout} seconds",
-            "timed_out":   True,
+            "command":   command,
+            "exit_code": -1,
+            "success":   False,
+            "stdout":    "",
+            "stderr":    f"Command timed out after {timeout} seconds",
+            "output":    f"Command timed out after {timeout} seconds",
+            "timed_out": True,
         }
 
     except Exception as e:

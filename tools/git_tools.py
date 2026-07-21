@@ -1,4 +1,4 @@
-
+import signal
 from pathlib import Path
 from config import is_path_allowed, DEFAULT_GIT_LOG_LIMIT
 
@@ -18,7 +18,7 @@ def _get_repo(path: str):
     Returns (repo, None) on success or (None, error_dict) on failure.
     """
     if not GIT_AVAILABLE:
-        return None, {"error": "gitpython is not installed. Run: pip install gitpython"}
+        return None, {"error": "gitpython not installed"}
 
     resolved = Path(path).resolve()
 
@@ -26,16 +26,18 @@ def _get_repo(path: str):
         return None, {"error": f"Path not found: {path}"}
 
     if not is_path_allowed(str(resolved)):
-        return None, {"error": f"Access denied: {path} is outside allowed directories"}
+        return None, {"error": f"Access denied: {path}"}
 
     try:
         repo = git.Repo(str(resolved), search_parent_directories=True)
+        # Test git is actually reachable
+        _ = repo.git.version()
         return repo, None
     except git.InvalidGitRepositoryError:
         return None, {"error": f"Not a git repository: {path}"}
     except Exception as e:
         return None, {"error": f"Could not open repository: {e}"}
-
+    
 
 # ── get_git_log ───────────────────────────────────────────────────────────────
 
