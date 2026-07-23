@@ -2,20 +2,6 @@
 
 A local MCP server that gives AI assistants real-time access to your development environment without you having to copy-paste anything.
 
-## How it works
-
-```
-You ask Claude a question about your project
-        ↓
-Claude calls devscope tools autonomously
-        ↓
-devscope reads your local files, git, or runs a command
-        ↓
-Claude answers with full, accurate context
-```
-
-Without devscope, you manually copy files into the chat. With devscope, Claude navigates your project itself.
-
 ## Tools
 
 ### File Tools
@@ -34,7 +20,7 @@ Without devscope, you manually copy files into the chat. With devscope, Claude n
 ### Search Tools
 | Tool | Description |
 |------|-------------|
-| `search_code` | Search across files for a keyword or regex pattern |
+| `search_code` | Search across files for a keyword |
 | `find_definition` | Jump to where a function, class, or variable is defined |
 
 ### Shell Tools
