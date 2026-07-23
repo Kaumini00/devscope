@@ -9,14 +9,12 @@ except ImportError:
     GIT_AVAILABLE = False
 
 
-# ── helpers ───────────────────────────────────────────────────────────────────
+#  helpers 
 
 
 def _get_repo(path: str):
-    """
-    Resolve and validate a git repo at the given path.
-    Returns (repo, None) on success or (None, error_dict) on failure.
-    """
+    """Resolve and validate a git repo at the given path"""
+    
     if not GIT_AVAILABLE:
         return None, {"error": "gitpython not installed"}
 
@@ -39,17 +37,12 @@ def _get_repo(path: str):
         return None, {"error": f"Could not open repository: {e}"}
     
 
-# ── get_git_log ───────────────────────────────────────────────────────────────
+#  get_git_log 
 
 
 def get_git_log(path: str, limit: int = DEFAULT_GIT_LOG_LIMIT) -> dict:
-    """
-    Return recent commit history for a git repository.
-
-    Args:
-        path:  Path to the repo (or any folder inside it)
-        limit: Number of commits to return (default from config, max 100)
-    """
+    """Return recent commit history for a git repository"""
+    
     repo, error = _get_repo(path)
     if error:
         return error
@@ -87,17 +80,11 @@ def get_git_log(path: str, limit: int = DEFAULT_GIT_LOG_LIMIT) -> dict:
         return {"error": f"Could not read git log: {e}"}
 
 
-# ── get_git_diff ──────────────────────────────────────────────────────────────
+#  get_git_diff 
 
 
 def get_git_diff(path: str, file_path: str = None) -> dict:
-    """
-    Return current uncommitted changes (staged + unstaged).
-
-    Args:
-        path:       Path to the repo (or any folder inside it)
-        file_path:  Optional — diff for a specific file only
-    """
+    """Return current uncommitted changes"""
     repo, error = _get_repo(path)
     if error:
         return error
@@ -112,7 +99,7 @@ def get_git_diff(path: str, file_path: str = None) -> dict:
             "summary": {}
         }
 
-        # ── Staged changes (index vs HEAD) ────────────────────────────────────
+        #  Staged changes (index vs HEAD) 
         try:
             staged_diffs = repo.index.diff("HEAD")
         except Exception:
@@ -124,19 +111,19 @@ def get_git_diff(path: str, file_path: str = None) -> dict:
                 continue
             results["staged"].append(_format_diff(diff))
 
-        # ── Unstaged changes (working tree vs index) ──────────────────────────
+        #  Unstaged changes (working tree vs index) 
         for diff in repo.index.diff(None):
             if file_path and diff.a_path != file_path and diff.b_path != file_path:
                 continue
             results["unstaged"].append(_format_diff(diff))
 
-        # ── Untracked files ───────────────────────────────────────────────────
+        #  Untracked files 
         untracked = repo.untracked_files
         if file_path:
             untracked = [f for f in untracked if f == file_path]
         results["untracked"] = untracked
 
-        # ── Summary ───────────────────────────────────────────────────────────
+        #  Summary 
         results["summary"] = {
             "staged_files":    len(results["staged"]),
             "unstaged_files":  len(results["unstaged"]),
@@ -154,15 +141,12 @@ def get_git_diff(path: str, file_path: str = None) -> dict:
         return {"error": f"Could not get diff: {e}"}
 
 
-# ── get_git_status ────────────────────────────────────────────────────────────
+#  get_git_status 
 
 
 def get_git_status(path: str) -> dict:
-    """
-    Return a concise status overview of the repository —
-    current branch, last commit, and change counts.
-    Useful as a quick health check before deeper inspection.
-    """
+    """Return a concise status overview of the repository"""
+    
     repo, error = _get_repo(path)
     if error:
         return error
@@ -202,11 +186,12 @@ def get_git_status(path: str) -> dict:
         return {"error": f"Could not get status: {e}"}
 
 
-# ── internal formatter ────────────────────────────────────────────────────────
+#  internal formatter 
 
 
 def _format_diff(diff) -> dict:
-    """Format a single diff object into a clean dict."""
+    """Format a single diff object into a clean dict"""
+    
     change_type_map = {
         "A": "added",
         "D": "deleted",

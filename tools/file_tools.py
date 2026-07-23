@@ -9,18 +9,12 @@ from config import (
 )
 
 
-# ── read_file ─────────────────────────────────────────────────────────────────
+#  read_file 
 
 
 def read_file(path: str) -> dict:
-    """
-    Read the contents of a file.
+    """Read the contents of a file"""
 
-    Safety checks:
-    - Path must be within allowed directories
-    - Extension must be in the allowed list
-    - File must not exceed MAX_FILE_SIZE_MB
-    """
     resolved = Path(path).resolve()
 
     if not resolved.exists():
@@ -52,21 +46,11 @@ def read_file(path: str) -> dict:
         return {"error": f"Could not read file: {e}"}
 
 
-# ── list_directory ────────────────────────────────────────────────────────────
+#  list_directory 
 
 
 def list_directory(path: str, depth: int = 2) -> dict:
-    """
-    List files and folders at a given path as a tree.
-
-    Safety checks:
-    - Path must be within allowed directories
-    - Skips directories in SKIP_DIRECTORIES
-
-    Args:
-        path:  Directory to list
-        depth: How many levels deep to traverse (default 2, max 5)
-    """
+    """List files and folders at a given path as a tree"""
     resolved = Path(path).resolve()
 
     if not resolved.exists():

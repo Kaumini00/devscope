@@ -8,18 +8,18 @@ from tools.git_tools import get_git_log, get_git_diff, get_git_status
 from tools.search_tools import search_code, find_definition
 from tools.shell_tools import run_command, run_tests, get_environment
 
-# ── Create server ─────────────────────────────────────────────────────────────
+#  Create server  
 
 app = Server("devscope")
 
-# ── Tool registry ─────────────────────────────────────────────────────────────
+#  Tool registry  
 
 @app.list_tools()
 async def list_tools() -> list[types.Tool]:
-    """Tell the AI client what tools are available."""
+    """List the tools for AI"""
     return [
 
-        # ── File tools ────────────────────────────────────────────────────────
+        #  File tools 
 
         types.Tool(
             name="read_file",
@@ -56,7 +56,7 @@ async def list_tools() -> list[types.Tool]:
             }
         ),
 
-        # ── Git tools ─────────────────────────────────────────────────────────
+        #  Git tools  
 
         types.Tool(
             name="get_git_status",
@@ -112,7 +112,7 @@ async def list_tools() -> list[types.Tool]:
             }
         ),
 
-        # ── Search tools ──────────────────────────────────────────────────────
+        #  Search tools 
 
         types.Tool(
             name="search_code",
@@ -176,7 +176,7 @@ async def list_tools() -> list[types.Tool]:
             }
         ),
 
-        # ── Shell tools ───────────────────────────────────────────────────────
+        #  Shell tools 
 
         types.Tool(
             name="get_environment",
@@ -240,11 +240,11 @@ async def list_tools() -> list[types.Tool]:
     ]
 
 
-# ── Tool executor ─────────────────────────────────────────────────────────────
+#  Tool executor  
 
 @app.call_tool()
 async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
-    """Execute the tool the AI requested and return the result."""
+    """Execute the tool"""
 
     try:
         result = await asyncio.to_thread(_dispatch, name, arguments)
@@ -263,7 +263,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
 def _dispatch(name: str, arguments: dict):
     """Route tool name to the correct function."""
 
-    # ── File tools ────────────────────────────────────────────────────────────
+    #  File tools  
 
     if name == "read_file":
         return read_file(
@@ -276,7 +276,7 @@ def _dispatch(name: str, arguments: dict):
             depth=arguments.get("depth", 2)
         )
 
-    # ── Git tools ─────────────────────────────────────────────────────────────
+    #  Git tools  
 
     elif name == "get_git_status":
         return get_git_status(
@@ -295,7 +295,7 @@ def _dispatch(name: str, arguments: dict):
             file_path=arguments.get("file_path")
         )
 
-    # ── Search tools ──────────────────────────────────────────────────────────
+    #  Search tools  
 
     elif name == "search_code":
         return search_code(
@@ -314,7 +314,7 @@ def _dispatch(name: str, arguments: dict):
             language=arguments.get("language", "python")
         )
 
-    # ── Shell tools ───────────────────────────────────────────────────────────
+    #  Shell tools  
 
     elif name == "get_environment":
         return get_environment(
@@ -334,13 +334,13 @@ def _dispatch(name: str, arguments: dict):
             framework=arguments.get("framework", "auto")
         )
 
-    # ── Unknown ───────────────────────────────────────────────────────────────
+    #  Unknown  
 
     else:
         return {"error": f"Unknown tool: {name}"}
 
 
-# ── Entry point ───────────────────────────────────────────────────────────────
+#  Entry point  
 
 async def main():
     async with stdio_server() as (read_stream, write_stream):

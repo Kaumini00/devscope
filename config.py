@@ -1,11 +1,9 @@
 import os
 from pathlib import Path
 
-# ── Allowed paths ─────────────────────────────────────────────────────────────
-# Directories the server is allowed to access.
-
+# Allowed paths 
 DEFAULT_ALLOWED_PATHS = [
-    str(Path.home() / "Projects"),   # ~/Projects
+    str(Path.home() / "Projects"),  
     "D:/Projects",                   
 ]
 
@@ -16,9 +14,7 @@ def get_allowed_paths() -> list[str]:
         return [p.strip() for p in env_paths.split(",") if p.strip()]
     return DEFAULT_ALLOWED_PATHS
 
-# ── Blocked commands ──────────────────────────────────────────────────────────
-# Commands that can NEVER be executed, regardless of what the AI requests.
-
+# Blocked commands 
 BLOCKED_COMMANDS = [
     "rm -rf",
     "rmdir /s",
@@ -35,7 +31,7 @@ BLOCKED_COMMANDS = [
     "wget | bash",
 ]
 
-# ── File settings ─────────────────────────────────────────────────────────────
+#  File settings  
 
 MAX_FILE_SIZE_MB = 2
 
@@ -58,7 +54,7 @@ ALLOWED_EXTENSIONS = {
     ".csv", ".xml", ".sql",
 }
 
-# Folders to always skip when walking the filesystem
+# Folders to skip
 SKIP_DIRECTORIES = {
     ".venv", "venv", "env",
     "__pycache__", ".git",
@@ -68,26 +64,24 @@ SKIP_DIRECTORIES = {
     "chroma_db", ".egg-info",
 }
 
-# ── Shell settings ────────────────────────────────────────────────────────────
+#  Shell settings  
 
 # Set to True to completely disable run_command
 READ_ONLY_MODE = False
 
-# Maximum time a command is allowed to run (seconds)
+# Max time a command is allowed to run
 COMMAND_TIMEOUT_SECONDS = 30
 
-# ── Search settings ───────────────────────────────────────────────────────────
-
+#  Search settings  
 MAX_SEARCH_RESULTS = 50
 
-# ── Git settings ──────────────────────────────────────────────────────────────
-
+#  Git settings  
 DEFAULT_GIT_LOG_LIMIT = 20
 
-# ── Safety helpers ────────────────────────────────────────────────────────────
+#  Safety helpers  
 
 def is_path_allowed(path: str) -> bool:
-    """Check if a given path is within the allowed paths."""
+    """Check if a given path is within the allowed paths"""
     resolved = str(Path(path).resolve())
     return any(
         resolved.startswith(str(Path(allowed).resolve()))
@@ -95,16 +89,16 @@ def is_path_allowed(path: str) -> bool:
     )
 
 def is_command_blocked(command: str) -> bool:
-    """Check if a command contains any blocked patterns."""
+    """Check if a command contains any blocked patterns"""
     command_lower = command.lower()
     return any(blocked in command_lower for blocked in BLOCKED_COMMANDS)
 
 def is_extension_allowed(path: str) -> bool:
-    """Check if a file extension is in the allowed list."""
+    """Check if a file extension is in the allowed list"""
     return Path(path).suffix.lower() in ALLOWED_EXTENSIONS
 
 def is_file_too_large(path: str) -> bool:
-    """Check if a file exceeds the maximum allowed size."""
+    """Check if a file exceeds the maximum allowed size"""
     try:
         size_mb = Path(path).stat().st_size / (1024 * 1024)
         return size_mb > MAX_FILE_SIZE_MB

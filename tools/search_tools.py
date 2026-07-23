@@ -8,7 +8,7 @@ from config import (
 )
 
 
-# ── search_code ───────────────────────────────────────────────────────────────
+#  search_code 
 
 
 def search_code(
@@ -19,17 +19,8 @@ def search_code(
     use_regex: bool = False,
     context_lines: int = 2,
 ) -> dict:
-    """
-    Search across all files in a directory for a keyword or pattern.
-
-    Args:
-        path:           Directory to search
-        query:          Keyword or regex pattern to search for
-        extension:      Optional file extension filter e.g. ".py"
-        case_sensitive: Whether the search is case sensitive (default False)
-        use_regex:      Treat query as a regex pattern (default False)
-        context_lines:  Number of lines to show around each match (default 2)
-    """
+    """Search across all files in a directory for a keyword or pattern"""
+    
     resolved = Path(path).resolve()
 
     if not resolved.exists():
@@ -104,19 +95,12 @@ def search_code(
     }
 
 
-# ── find_definition ───────────────────────────────────────────────────────────
+#  find_definition 
 
 
 def find_definition(path: str, name: str, language: str = "python") -> dict:
-    """
-    Find where a function, class, or variable is defined in the codebase.
-    More targeted than search_code — looks specifically at definition patterns.
-
-    Args:
-        path:     Directory to search
-        name:     Function, class, or variable name to find
-        language: Language hint for pattern matching (default 'python')
-    """
+    """Find where a function, class, or variable is defined in the codebase"""
+    
     resolved = Path(path).resolve()
 
     if not resolved.exists():
@@ -159,11 +143,12 @@ def find_definition(path: str, name: str, language: str = "python") -> dict:
     }
 
 
-# ── internal helpers ──────────────────────────────────────────────────────────
+#  internal helpers 
 
 
 def _walk_files(root: Path, extension: str = None):
     """Yield all allowed files under root, skipping blocked directories."""
+    
     for item in sorted(root.rglob("*")):
         # Skip blocked directories
         if any(skip in item.parts for skip in SKIP_DIRECTORIES):

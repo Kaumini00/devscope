@@ -10,7 +10,7 @@ from config import (
 )
 
 
-# ── run_command ───────────────────────────────────────────────────────────────
+#  run_command 
 
 
 def run_command(
@@ -19,22 +19,9 @@ def run_command(
     timeout: int = COMMAND_TIMEOUT_SECONDS,
     environment: dict = None,
 ) -> dict:
-    """
-    Run a shell command and return its output.
-
-    Safety checks:
-    - READ_ONLY_MODE must be False
-    - Command must not match any blocked patterns
-    - Working directory must be within allowed paths
-    - Timeout is enforced (default from config)
-
-    Args:
-        command:           Shell command to run
-        working_directory: Directory to run the command in (default: current dir)
-        timeout:           Max seconds to wait (default from config, max 120)
-        environment:       Optional extra environment variables to pass
-    """
-    # ── Safety gates ──────────────────────────────────────────────────────────
+    """Run a shell command and return its output"""
+    
+    #  Safety gates 
 
     if READ_ONLY_MODE:
         return {
@@ -50,7 +37,7 @@ def run_command(
             "hint":  "This command matches a blocked pattern. Edit BLOCKED_COMMANDS in config.py if you need to allow it."
         }
 
-    # ── Resolve working directory ─────────────────────────────────────────────
+    #  Resolve working directory 
 
     resolved_dir = Path(working_directory).resolve()
 
@@ -65,11 +52,11 @@ def run_command(
             "error": f"Access denied: {working_directory} is outside allowed directories"
         }
 
-    # ── Cap timeout ───────────────────────────────────────────────────────────
+    #  Cap timeout 
 
     timeout = min(timeout, 120)
 
-    # ── Build environment ─────────────────────────────────────────────────────
+    #  Build environment 
 
     # Build environment with git in PATH
     env = os.environ.copy()
@@ -87,11 +74,9 @@ def run_command(
     if environment:
         env.update(environment)
 
-    # ── Execute ───────────────────────────────────────────────────────────────
+    #  Execute 
 
     try:
-        # shell=False is more reliable in restricted environments like Claude Desktop
-        # shlex.split handles quoted arguments correctly
         try:
             args = shlex.split(command)
         except ValueError:
@@ -100,7 +85,7 @@ def run_command(
 
         result = subprocess.run(
             args,
-            shell=False,                # ← key change
+            shell=False,            
             cwd=str(resolved_dir),
             capture_output=True,
             text=True,
@@ -156,19 +141,12 @@ def run_command(
         }
 
 
-# ── run_tests ─────────────────────────────────────────────────────────────────
+#  run_tests 
 
 
 def run_tests(path: str, framework: str = "auto") -> dict:
-    """
-    Run the test suite for a project and return structured results.
-    A convenience wrapper around run_command for common test runners.
-
-    Args:
-        path:      Path to the project root
-        framework: Test framework to use — 'pytest', 'unittest', 'npm', or 'auto'
-                   'auto' detects the framework from the project structure
-    """
+    """Run the test suite for a project and return structured results"""
+    
     resolved = Path(path).resolve()
 
     if not resolved.exists():
@@ -177,7 +155,7 @@ def run_tests(path: str, framework: str = "auto") -> dict:
     if not is_path_allowed(str(resolved)):
         return {"error": f"Access denied: {path} is outside allowed directories"}
 
-    # ── Auto-detect framework ─────────────────────────────────────────────────
+    #  Auto-detect framework 
 
     if framework == "auto":
         framework = _detect_test_framework(resolved)
@@ -187,7 +165,7 @@ def run_tests(path: str, framework: str = "auto") -> dict:
                 "hint":  "Pass framework='pytest', 'unittest', or 'npm' explicitly"
             }
 
-    # ── Build command ─────────────────────────────────────────────────────────
+    #  Build command 
 
     command_map = {
         "pytest":    "pytest --tb=short -q",
@@ -200,7 +178,7 @@ def run_tests(path: str, framework: str = "auto") -> dict:
     if not command:
         return {"error": f"Unknown framework: {framework}. Use: {list(command_map.keys())}"}
 
-    # ── Run ───────────────────────────────────────────────────────────────────
+    #  Run 
 
     raw = run_command(command, working_directory=str(resolved), timeout=60)
 
@@ -221,19 +199,12 @@ def run_tests(path: str, framework: str = "auto") -> dict:
     }
 
 
-# ── get_environment ───────────────────────────────────────────────────────────
+#  get_environment 
 
 
 def get_environment(path: str) -> dict:
-    """
-    Return useful environment info for a project directory —
-    Python version, Node version, installed tools, virtual env status.
-    The AI uses this to understand the runtime environment before
-    suggesting commands.
-
-    Args:
-        path: Project directory to inspect
-    """
+    """Return environment info for a project directory"""
+    
     resolved = Path(path).resolve()
 
     if not is_path_allowed(str(resolved)):
@@ -241,30 +212,30 @@ def get_environment(path: str) -> dict:
 
     info = {}
 
-    # ── Python ────────────────────────────────────────────────────────────────
+    #  Python 
     py = run_command("python --version", working_directory=str(resolved))
     info["python"] = py.get("output", "not found") if py.get("success") else "not found"
 
-    # ── Node ──────────────────────────────────────────────────────────────────
+    #  Node 
     node = run_command("node --version", working_directory=str(resolved))
     info["node"] = node.get("output", "not found") if node.get("success") else "not found"
 
-    # ── npm ───────────────────────────────────────────────────────────────────
+    #  npm 
     npm = run_command("npm --version", working_directory=str(resolved))
     info["npm"] = npm.get("output", "not found") if npm.get("success") else "not found"
 
-    # ── Git ───────────────────────────────────────────────────────────────────
+    #  Git 
     git_ver = run_command("git --version", working_directory=str(resolved))
     info["git"] = git_ver.get("output", "not found") if git_ver.get("success") else "not found"
 
-    # ── Virtual env ───────────────────────────────────────────────────────────
+    #  Virtual env 
     venv_path = os.environ.get("VIRTUAL_ENV", "")
     info["virtual_env"] = {
         "active":  bool(venv_path),
         "path":    venv_path or None,
     }
 
-    # ── Project type detection ────────────────────────────────────────────────
+    #  Project type detection 
     info["project_type"] = _detect_project_type(resolved)
 
     return {
@@ -273,7 +244,7 @@ def get_environment(path: str) -> dict:
     }
 
 
-# ── internal helpers ──────────────────────────────────────────────────────────
+#  internal helpers 
 
 
 def _detect_test_framework(path: Path) -> str | None:
