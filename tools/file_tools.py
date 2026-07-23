@@ -37,7 +37,6 @@ def read_file(path: str) -> dict:
         lines = content.splitlines()
         return {
             "path": str(resolved),
-            "extension": resolved.suffix,
             "lines": len(lines),
             "size_kb": round(resolved.stat().st_size / 1024, 2),
             "content": content,
@@ -70,7 +69,6 @@ def list_directory(path: str, depth: int = 2) -> dict:
         return {
             "path": str(resolved),
             "tree": tree,
-            "summary": _summarize_tree(tree),
         }
     except Exception as e:
         return {"error": f"Could not list directory: {e}"}
@@ -107,25 +105,6 @@ def _build_tree(path: Path, depth: int, current_depth: int) -> list:
                     "name": entry.name,
                     "type": "file",
                     "extension": entry.suffix,
-                    "size_kb": round(entry.stat().st_size / 1024, 2),
                 })
 
     return items
-
-
-def _summarize_tree(tree: list) -> dict:
-    """Count files and directories in the tree."""
-    files = 0
-    dirs = 0
-
-    def _count(items):
-        nonlocal files, dirs
-        for item in items:
-            if item["type"] == "file":
-                files += 1
-            elif item["type"] == "directory":
-                dirs += 1
-                _count(item.get("children", []))
-
-    _count(tree)
-    return {"total_files": files, "total_directories": dirs}
