@@ -12,7 +12,6 @@ from config import (
 
 #  run_command 
 
-
 def run_command(
     command: str,
     working_directory: str = ".",
@@ -186,16 +185,11 @@ def run_tests(path: str, framework: str = "auto") -> dict:
         return raw
 
     return {
-        "framework":         framework,
-        "command":           raw.get("command"),
-        "working_directory": raw.get("working_directory"),
-        "success":           raw.get("success"),
-        "exit_code":         raw.get("exit_code"),
-        "output":            raw.get("output"),
-        "stdout":            raw.get("stdout"),
-        "stderr":            raw.get("stderr"),
-        "timed_out":         raw.get("timed_out"),
-        "summary":           _parse_test_summary(raw.get("output", ""), framework),
+        "framework": framework,
+        "success":   raw.get("success"),
+        "output":    raw.get("output"),
+        "timed_out": raw.get("timed_out"),
+        "summary":   _parse_test_summary(raw.get("output", "")),
     }
 
 
@@ -243,7 +237,6 @@ def get_environment(path: str) -> dict:
         "environment": info,
     }
 
-
 #  internal helpers 
 
 
@@ -289,37 +282,8 @@ def _detect_project_type(path: Path) -> list[str]:
     return types or ["unknown"]
 
 
-def _parse_test_summary(output: str, framework: str) -> dict:
-    """
-    Extract a quick pass/fail summary from test runner output.
-    Best-effort — returns raw output if parsing fails.
-    """
+def _parse_test_summary(output: str) -> str:
     if not output:
-        return {"parsed": False}
-
-    summary = {"parsed": False, "raw_tail": output[-300:]}
-
-    try:
-        if framework == "pytest":
-            # pytest summary line: "3 passed, 1 failed in 0.42s"
-            for line in reversed(output.splitlines()):
-                line = line.strip()
-                if "passed" in line or "failed" in line or "error" in line:
-                    summary["parsed"]  = True
-                    summary["line"]    = line
-                    summary["passed"]  = "passed" in line and "failed" not in line
-                    break
-
-        elif framework in ("npm", "jest"):
-            # Jest: "Tests: 3 passed, 1 failed"
-            for line in output.splitlines():
-                if line.strip().startswith("Tests:"):
-                    summary["parsed"] = True
-                    summary["line"]   = line.strip()
-                    summary["passed"] = "failed" not in line.lower()
-                    break
-
-    except Exception:
-        pass
-
-    return summary
+        return ""
+    lines = output.strip().splitlines()
+    return "\n".join(lines[-5:])
