@@ -10,13 +10,11 @@ from config import (
 
 #  search_code 
 
-
 def search_code(
     path: str,
     query: str,
     extension: str = None,
     case_sensitive: bool = False,
-    use_regex: bool = False,
     context_lines: int = 2,
 ) -> dict:
     """Search across all files in a directory for a keyword or pattern"""
@@ -35,16 +33,6 @@ def search_code(
     if not query.strip():
         return {"error": "Search query cannot be empty"}
 
-    # Validate regex early so we fail fast with a clear message
-    if use_regex:
-        try:
-            flags = 0 if case_sensitive else re.IGNORECASE
-            pattern = re.compile(query, flags)
-        except re.error as e:
-            return {"error": f"Invalid regex pattern: {e}"}
-    else:
-        pattern = None
-
     # Normalize extension filter
     if extension and not extension.startswith("."):
         extension = f".{extension}"
@@ -59,9 +47,7 @@ def search_code(
         file_matches = _search_file(
             file_path=file_path,
             query=query,
-            pattern=pattern,
             case_sensitive=case_sensitive,
-            use_regex=use_regex,
             context_lines=context_lines,
         )
 
@@ -76,22 +62,16 @@ def search_code(
         # Stop if we've hit the result limit
         total_matches = sum(m["match_count"] for m in matches)
         if total_matches >= MAX_SEARCH_RESULTS:
-            files_skipped = _count_remaining_files(resolved, extension, file_path)
+            files_skipped = 0  
             break
 
     total_matches = sum(m["match_count"] for m in matches)
 
     return {
-        "query":          query,
-        "path":           str(resolved),
-        "case_sensitive": case_sensitive,
-        "use_regex":      use_regex,
-        "files_searched": files_searched,
+        "query":              query,
+        "total_matches":      total_matches,
         "files_with_matches": len(matches),
-        "total_matches":  total_matches,
-        "truncated":      files_skipped > 0,
-        "files_skipped":  files_skipped,
-        "results":        matches,
+        "results":            matches,
     }
 
 
@@ -165,9 +145,7 @@ def _walk_files(root: Path, extension: str = None):
 def _search_file(
     file_path: Path,
     query: str,
-    pattern,
     case_sensitive: bool,
-    use_regex: bool,
     context_lines: int,
 ) -> list:
     """Search a single file and return all matches with context."""
@@ -181,9 +159,7 @@ def _search_file(
     for line_num, line in enumerate(lines, start=1):
         hit = False
 
-        if use_regex:
-            hit = bool(pattern.search(line))
-        elif case_sensitive:
+        if case_sensitive:
             hit = query in line
         else:
             hit = query.lower() in line.lower()
@@ -208,17 +184,6 @@ def _search_file(
             })
 
     return matches
-
-
-def _count_remaining_files(root: Path, extension: str, last_file: Path) -> int:
-    """Count how many files were skipped after hitting the result limit."""
-    all_files = list(_walk_files(root, extension))
-    try:
-        idx = all_files.index(last_file)
-        return len(all_files) - idx - 1
-    except ValueError:
-        return 0
-
 
 def _get_definition_patterns(name: str, language: str) -> list:
     """Return compiled regex patterns that match definitions for the given language."""
