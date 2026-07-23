@@ -1,4 +1,3 @@
-import signal
 from pathlib import Path
 from config import is_path_allowed, DEFAULT_GIT_LOG_LIMIT
 
@@ -60,9 +59,7 @@ def get_git_log(path: str, limit: int = DEFAULT_GIT_LOG_LIMIT) -> dict:
 
             commits.append({
                 "hash":          commit.hexsha[:8],
-                "full_hash":     commit.hexsha,
                 "author":        commit.author.name,
-                "email":         commit.author.email,
                 "date":          commit.committed_datetime.strftime("%Y-%m-%d %H:%M:%S"),
                 "message":       commit.message.strip(),
                 "changed_files": changed_files,
@@ -91,7 +88,6 @@ def get_git_diff(path: str, file_path: str = None) -> dict:
 
     try:
         results = {
-            "repo": str(repo.working_dir),
             "branch": str(repo.active_branch),
             "staged": [],
             "unstaged": [],
@@ -172,7 +168,6 @@ def get_git_status(path: str) -> dict:
         ]
 
         return {
-            "repo":           str(repo.working_dir),
             "branch":         str(repo.active_branch),
             "is_dirty":       repo.is_dirty(untracked_files=True),
             "staged_count":   len(repo.index.diff("HEAD")) if last_commit else 0,
